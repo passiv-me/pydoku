@@ -1,6 +1,5 @@
 .PHONY: clean
 
-
 all: .venv/bin/activate
 	pip install .
 	pydoku
@@ -10,6 +9,9 @@ all: .venv/bin/activate
 	@pip install --upgrade pip
 	@pip install -r requirements.txt
 	@. .venv/bin/activate
+
+test: .venv/bin/activate
+	pytest --doctest-modules -v --maxfail=1
 
 clean:
 	@echo "Cleaning project workspace..."
