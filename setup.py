@@ -11,5 +11,5 @@ setup(
     author="Sivam Pasupathipillai",
     author_email="sivam.pasupathipillai@gmail.com",
     packages=find_packages(),
-    entry_points={"console_scripts": ["pydoku = pydoku.main:main"]},
+    entry_points={"console_scripts": ["pydoku = pydoku:main"]},
 )
