@@ -1,8 +1,10 @@
+PYTHON_SOURCES = $(shell find ./pydoku/ ./tests/ -name "*.py")
+
 .PHONY: clean
 
-all: .venv/bin/activate
-	pip install .
-	pydoku
+all: .venv/bin/activate .test_report
+	@pip install .
+	@pydoku
 
 .venv/bin/activate: requirements.txt
 	@virtualenv .venv
@@ -10,8 +12,10 @@ all: .venv/bin/activate
 	@pip install -r requirements.txt
 	@. .venv/bin/activate
 
-test: .venv/bin/activate
-	pytest --doctest-modules -v --maxfail=1
+test: .test_report
+.test_report: .venv/bin/activate $(PYTHON_SOURCES)
+	@pytest -v --maxfail=1
+	@echo "All good!" > .test_report
 
 clean:
 	@echo "Cleaning project workspace..."

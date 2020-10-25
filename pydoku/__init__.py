@@ -133,11 +133,30 @@ def valid_board(game_board):
 
 
 def none_empty(game_board):
+    """
+
+    >>> none_empty(np.array([[1, 0], [3, 4]]))
+    False
+    >>> none_empty(np.array([[1, 2], [3, 4]]))
+    True
+
+    :param game_board:
+    :return:
+    """
     return np.all(game_board > 0)
 
 
 def solved(game_board):
     return valid_board(game_board) and none_empty(game_board)
+
+
+def find_random_empty_cell(game_board):
+    row = random.randint(0, 8)
+    col = random.randint(0, 8)
+    while game_board[row, col] != 0:
+        row = random.randint(0, 8)
+        col = random.randint(0, 8)
+    return row, col
 
 
 def find_empty_cell(game_board):
@@ -168,31 +187,80 @@ def next_value(value):
     return value % 9
 
 
-def backtrack(game_board, pos_log):
-    if len(pos_log) == 1:
-        row, col = pos_log[1]
-        game_board[row, col] = next_value(game_board[row, col])
-        return game_board, pos_log
+def get_slice(index):
+    """
+
+    >>> get_slice(2)
+    slice(0, 3, None)
+    >>> get_slice(3)
+    slice(3, 6, None)
+    >>> get_slice(8)
+    slice(6, 9, None)
+
+    :param index:
+    :return:
+    """
+    if index < 3:
+        return slice(0, 3)
+    elif index < 6:
+        return slice(3, 6)
     else:
-        row, col = pos_log[-2]
-        game_board[row, col] = next_value(game_board[row, col])
-        return game_board, pos_log
+        return slice(6, 9)
 
 
-def solve(game_board, pos_log):
-    if solved(game_board):
-        return game_board, pos_log
-    row, col = find_empty_cell(game_board)
-    pos_log.append(
-        (row, col)
+def get_box_values(game_board, row, col):
+    return set(game_board[get_slice(row), get_slice(col)].flatten().tolist())
+
+
+def get_valid_values(game_board, position):
+    row, col = position
+    all_values = set(range(1, 10))
+    row_values = set(game_board[row, :].flatten().tolist())
+    col_values = set(game_board[:, col].flatten().tolist())
+    box_values = get_box_values(game_board, row, col)
+    return list(
+        all_values.difference(row_values).difference(col_values).difference(box_values)
     )
-    game_board[row, col] = next_value(game_board[row, col])
-    while not valid_board(game_board):
-        value = next_value(game_board[row, col])
-        game_board[row, col] = value
-        if value == 9:
-            return backtrack(game_board, pos_log)
-    return game_board, pos_log
+
+
+def find_cells_valid_values(game_board):
+    rows, cols = game_board.shape
+    valid_values = {}
+    for row in range(rows):
+        for col in range(cols):
+            if game_board[row, col] == 0:
+                valid_values[(row, col)] = get_valid_values(game_board, (row, col))
+    return valid_values
+
+
+def solvable(valid_values):
+    for position, values in valid_values.items():
+        if not values:
+            return False
+    return True
+
+
+def backtrack(game_board, positions_log):
+    back_position = positions_log[-1]
+    row, col = back_position
+    game_board[row, col] = 0
+    return game_board, positions_log[:-1]
+
+
+def solve(game_board, positions_log):
+    if solved(game_board):
+        return game_board, positions_log
+
+    valid_values = find_cells_valid_values(game_board)
+
+    if solvable(valid_values):
+        position, values = random.choice(list(valid_values.items()))
+        row, col = position
+        game_board[row, col] = random.choice(values)
+        positions_log.append(position)
+        return game_board, positions_log
+
+    return backtrack(game_board, positions_log)
 
 
 def init_game_board(difficulty):
@@ -244,21 +312,21 @@ def main():
     is_running = True
 
     digits = [pygame.image.load("./assets/{}.png".format(i)) for i in range(10)]
-    difficulty = "easy"
+    difficulty = "ai"
 
     game_board = init_game_board(difficulty)
-    pos_log = []
+    positions_log = []
 
     while is_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 is_running = False
 
-        game_board, pos_log = solve(game_board, pos_log)
+        game_board, positions_log = solve(game_board, positions_log)
 
         draw_board(window_surface, game_board, digits)
         pygame.display.update()
-        time.sleep(1)
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
