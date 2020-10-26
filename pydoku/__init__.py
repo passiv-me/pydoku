@@ -7,7 +7,7 @@ import numpy as np
 pygame.init()
 
 filled_cells = {
-    "easy": 30,
+    "easy": 75,
     "medium": 20,
     "hard": 10,
     "ai": 0,
@@ -233,50 +233,33 @@ def find_cells_valid_values(game_board):
     return valid_values
 
 
-def solvable(valid_values):
-    for position, values in valid_values.items():
-        if not values:
-            return False
-    return True
-
-
-def backtrack(game_board, positions_log):
-    back_position = positions_log[-1]
-    row, col = back_position
-    game_board[row, col] = 0
-    return game_board, positions_log[:-1]
-
-
 def solve(game_board, positions_log):
+    """
+    TODO:
+     - this does not solve
+    """
+
     if solved(game_board):
         return game_board, positions_log
 
-    valid_values = find_cells_valid_values(game_board)
-
-    if solvable(valid_values):
-        position, values = random.choice(list(valid_values.items()))
-        row, col = position
-        game_board[row, col] = random.choice(values)
-        positions_log.append(position)
-        return game_board, positions_log
-
-    return backtrack(game_board, positions_log)
+    return game_board, positions_log
 
 
 def init_game_board(difficulty):
+    """
+    TODO:
+     - this creates unsolvable boards
+    """
     filled = filled_cells[difficulty]
     game_board = np.zeros((9, 9), dtype=int)
 
-    filled_positions = []
     for _ in range(filled):
         x = random.randint(0, 8)
         y = random.randint(0, 8)
-        filled_positions.append((x, y))
-
-    for x, y in filled_positions:
-        game_board[x, y] = random.randint(1, 9)
-        while not valid_board(game_board):
-            game_board[x, y] = random.randint(1, 9)
+        while not get_valid_values(game_board, (x, y)):
+            x = random.randint(0, 8)
+            y = random.randint(0, 8)
+        game_board[x, y] = random.choice(get_valid_values(game_board, (x, y)))
     return game_board
 
 
@@ -312,7 +295,7 @@ def main():
     is_running = True
 
     digits = [pygame.image.load("./assets/{}.png".format(i)) for i in range(10)]
-    difficulty = "ai"
+    difficulty = "easy"
 
     game_board = init_game_board(difficulty)
     positions_log = []
@@ -322,11 +305,11 @@ def main():
             if event.type == pygame.QUIT:
                 is_running = False
 
-        game_board, positions_log = solve(game_board, positions_log)
+        # game_board, positions_log = solve(game_board, positions_log)
 
         draw_board(window_surface, game_board, digits)
         pygame.display.update()
-        time.sleep(0.1)
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
